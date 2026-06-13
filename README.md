@@ -35,7 +35,7 @@ This project is part of my learning journey into Bash scripting and network auto
 Clone the project and install dependencies in one flow:
 
 ```bash
-git clone https://github.com/yourusername/connect56.git
+git clone https://github.com/kojoedem/connect56.git
 cd connect56
 chmod +x *.sh
 ./setup.sh
