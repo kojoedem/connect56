@@ -67,6 +67,7 @@ OPTIONS:
     -j, --json        Output result in JSON format (ideal for SIEM/pipelines)
     -c, --no-color    Disable ANSI colorized output
     -q, --quiet       Suppress headers and non-essential logs
+    -u, --update      Check GitHub for updates and self-update
     -m, --modules     Specify modules to run (comma-separated: all,whois,dns,web,subdomain)
     -v, --version     Show tool version
     -h, --help        Show this help message
@@ -75,9 +76,45 @@ EXAMPLES:
     ./connect56.sh 8.8.8.8
     ./connect56.sh example.com --json
     ./connect56.sh example.com --modules dns,subdomain
-    ./connect56.sh 2001:4860:4860::8888
+    ./connect56.sh --update
 
 EOF
+}
+
+# Self-update function
+check_and_update() {
+    log_info "Checking GitHub repository for CONNECT56 updates..."
+    local repo_url="https://raw.githubusercontent.com/kojoedem/connect56/main/connect56.sh"
+    local remote_version
+    remote_version=$(curl -s --connect-timeout 5 "$repo_url" 2>/dev/null | grep -E '^VERSION=' | head -n1 | cut -d'"' -f2 || echo "")
+
+    if [[ -z "$remote_version" ]]; then
+        log_warn "Unable to fetch remote version from GitHub. Please check your internet connection or repository URL."
+        return 1
+    fi
+
+    if [[ "$remote_version" != "$VERSION" ]]; then
+        log_success "New version available: v${remote_version} (Current: v${VERSION})"
+        echo -n "Would you like to update now? [y/N]: "
+        read -r confirm
+        if [[ "$confirm" =~ ^[Yy]$ ]]; then
+            log_info "Downloading latest connect56.sh from GitHub..."
+            local tmp_script
+            tmp_script=$(mktemp)
+            if curl -s -L "$repo_url" -o "$tmp_script" && grep -q 'VERSION=' "$tmp_script"; then
+                chmod +x "$tmp_script"
+                mv "$tmp_script" "$0"
+                log_success "CONNECT56 successfully updated to v${remote_version}!"
+                exit 0
+            else
+                log_error "Failed to download valid update script."
+                rm -f "$tmp_script"
+                return 1
+            fi
+        fi
+    else
+        log_success "CONNECT56 is already up to date (v${VERSION})."
+    fi
 }
 
 # Parse command-line arguments
@@ -95,6 +132,10 @@ parse_args() {
             -q|--quiet)
                 QUIET_MODE=true
                 shift
+                ;;
+            -u|--update)
+                check_and_update
+                exit 0
                 ;;
             -m|--modules)
                 SELECTED_MODULES="$2"
@@ -187,8 +228,9 @@ prompt_module_selection() {
         echo -e "  ${CYAN}[4]${RESET} Web Technology & Header Reconnaissance"
         echo -e "  ${CYAN}[5]${RESET} Subdomain Discovery & Health Check (Alive vs Dead)"
         echo -e "  ${CYAN}[6]${RESET} Custom Module Selection"
+        echo -e "  ${CYAN}[7]${RESET} Check GitHub for Script Updates"
         echo
-        read -rp "Enter choice [1-6] (Default: 1): " module_choice
+        read -rp "Enter choice [1-7] (Default: 1): " module_choice
         case "$module_choice" in
             2) SELECTED_MODULES="WHOIS" ;;
             3) SELECTED_MODULES="DNS" ;;
@@ -197,6 +239,10 @@ prompt_module_selection() {
             6)
                 read -rp "Enter comma-separated modules (whois,dns,web,subdomain): " custom_mods
                 SELECTED_MODULES="$custom_mods"
+                ;;
+            7)
+                check_and_update
+                exit 0
                 ;;
             *) SELECTED_MODULES="ALL" ;;
         esac
@@ -546,8 +592,8 @@ fetch_subdomains() {
 }
 
 main() {
-    parse_args "$@"
     init_colors
+    parse_args "$@"
 
     banner
     check_internet_connection
