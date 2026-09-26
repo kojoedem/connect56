@@ -1,183 +1,135 @@
-# CONNECT56
+# CONNECT56 v2.0 - Production Cyber Security & Network Intelligence CLI Tool
 
-CONNECT56 is a Bash-based network diagnostic tool that checks internet connectivity and retrieves IP, WHOIS, and BGP routing information.
+`CONNECT56` is an advanced Bash-based cyber security reconnaissance and network intelligence CLI tool designed for security analysts, network engineers, and system administrators.
 
-This project is part of my learning journey into Bash scripting and network automation.
-
----
-
-## 🚀 Features
-
-* Checks internet connectivity using ICMP (ping)
-* Displays your public IP address
-* Retrieves IP details:
-
-  * Hostname
-  * ASN (Autonomous System Number)
-  * Organization
-  * City and Country
-* Performs WHOIS lookup:
-
-  * NetRange / inetnum
-  * CIDR
-  * Abuse contact details (if available)
-* Extracts BGP routing information from RADB:
-
-  * Advertised prefixes
-  * RPKI status
-  * Sample routes with descriptions
-* Outputs results in a clean table format
+It performs automated target inspection against **IPv4/IPv6 addresses** and **domain names**, delivering comprehensive threat intelligence, WHOIS/RDAP records, BGP routing data, DNS enumeration, web technology reconnaissance, and health-monitored subdomain discovery.
 
 ---
 
-## ⚡ Quick Setup (Recommended)
+## ⚡ Features
 
-Clone the project and install dependencies in one flow:
+* **Target Auto-Resolution**: Resolves domain names to IP addresses or retrieves PTR (Reverse DNS) records for IP targets.
+* **Interactive Intelligence Selector**: Interactive prompt allows selecting full scans or targeted modules (`WHOIS`, `DNS`, `WEB`, `SUBDOMAIN`).
+* **WHOIS & RDAP Lookup**: Extracts registry ownership, netranges, CIDR blocks, and abuse contacts with automated API fallback.
+* **BGP Routing & RPKI Validation**: Queries RIPE Stat REST API and RADB WHOIS for advertised BGP prefixes, total prefix counts, and RPKI validity.
+* **DNS Enumeration**: Queries `A`, `AAAA`, `NS`, `MX`, and `TXT` (SPF/verification) records using `dig`, `host`, or `nslookup`.
+* **Web Technology Reconnaissance**: Fingerprints HTTP status codes, Server headers, `X-Powered-By` technologies, redirects, and HTML page titles via `curl`.
+* **Subdomain Discovery (Alive vs Dead)**: Queries Certificate Transparency logs (`crt.sh`) and candidate lists, probing DNS resolution to classify subdomains into **ALIVE** or **DEAD** in a clean table format.
+* **Private/Bogon IP Protection**: Detects RFC 1918, RFC 4193, loopback, and CGNAT IP addresses automatically.
+* **JSON Pipeline Integration**: Includes `--json` flag to output structured JSON suitable for SIEMs, log aggregators, and script automation.
+* **ANSI Colorized Output**: Dynamic terminal coloring with automatic pipe detection and `--no-color` support.
+* **System Man Page Integration**: Native Linux manual page (`man connect56`).
+
+---
+
+## 🚀 Quick Installation
+
+Clone the repository, run the setup script, and start scanning:
 
 ```bash
 git clone https://github.com/kojoedem/connect56.git
 cd connect56
 chmod +x *.sh
 ./setup.sh
+```
+
+Running `./setup.sh` automatically installs required system dependencies (`curl`, `jq`, `whois`, `bind-utils`/`dnsutils`) across major Linux distributions (`apt`, `dnf`, `yum`, `pacman`, `brew`) and installs the manual page so you can run `man connect56`.
+
+---
+
+## 📖 Usage & Syntax
+
+```bash
+./connect56.sh [OPTIONS] [IP_ADDRESS | DOMAIN]
+```
+
+### Options & Flags
+
+| Flag | Long Flag | Description |
+| :--- | :--- | :--- |
+| `-j` | `--json` | Output structured JSON data for security pipelines |
+| `-c` | `--no-color` | Disable ANSI colorized terminal output |
+| `-q` | `--quiet` | Suppress banners and non-essential logs |
+| `-m` | `--modules` | Specify module subset: `all`, `whois`, `dns`, `web`, `subdomain` |
+| `-v` | `--version` | Display version information |
+| `-h` | `--help` | Display command usage and examples |
+
+---
+
+## 💡 Examples
+
+### Interactive Profile Selection
+```bash
 ./connect56.sh
 ```
+Prompts the user to enter a target domain/IP and choose which intelligence modules to run.
 
----
-
-## 🛠️ Manual Installation (Alternative)
-
-If you prefer installing dependencies manually:
-
-```bash
-sudo apt update
-sudo apt install curl jq whois
-```
-
----
-
-## 📦 Setup Script
-
-The project includes a simple setup script:
-
-```bash
-./setup.sh
-```
-
-This will:
-
-* Update package lists
-* Install required tools (`curl`, `jq`, `whois`)
-
----
-
-## ▶️ Usage
-
-### Run with IP address
-
+### Full Target Reconnaissance
 ```bash
 ./connect56.sh 8.8.8.8
+./connect56.sh example.com
 ```
 
----
-
-### Run without IP address (interactive mode)
-
+### JSON Pipeline Output (SIEM / Automation)
 ```bash
-./connect56.sh
+./connect56.sh google.com --json | jq .
 ```
 
-You will be prompted to enter an IP address.
-
----
-
-## 🧠 How It Works
-
-1. Displays a welcome banner
-2. Checks internet connectivity using `ping`
-3. Retrieves your public IP using `curl`
-4. Accepts an IP address (argument or user input)
-5. Fetches IP details from `ipinfo.io`
-6. Performs WHOIS lookup for registry data
-7. Queries RADB (`whois.radb.net`) for BGP routing information
-8. Formats all output into readable tables
-
----
-
-## 📁 Project Structure
-
+### Specific Module Execution
+```bash
+./connect56.sh example.com --modules dns,subdomain
 ```
-connect56.sh   # Main Bash script
-setup.sh       # Dependency installer
-README.md      # Documentation
+
+### View System Manual Page
+```bash
+man connect56
 ```
 
 ---
 
-## 📊 Example Output
+## 📊 Sample Output
 
 ```
-INTERNET AVAILABLE
+=================== TARGET SUMMARY: 172.217.214.100 ===================
++-----------------+---------------------------------------------------------+
+| TARGET          | google.com                                              |
+| RESOLVED IP     | 172.217.214.100                                         |
+| PTR (REVERSE DNS) | jr-in-f100.1e100.net                                    |
+| IS PRIVATE/BOGON | false                                                   |
++-----------------+---------------------------------------------------------+
 
-Your Public IP address is: 41.x.x.x
-
-----------------------------------------------------------
-| FIELD      | VALUE                                     |
-----------------------------------------------------------
-| HOSTNAME   | N/A                                       |
-| ASN        | AS37030                                   |
-| ORG        | Airtel Ghana Limited                      |
-| CITY       | Accra                                     |
-| COUNTRY    | GH                                        |
-----------------------------------------------------------
-
-| NETRANGE   | 41.x.x.0 - 41.x.x.255                     |
-| CIDR       | 41.x.x.0/24                               |
-----------------------------------------------------------
-
-| ASN        | AS37030                                   |
-| TOTAL PREFIX | 92                                      |
-| RPKI STATUS | not_found                                |
-----------------------------------------------------------
+=================== SUBDOMAIN DISCOVERY (ALIVE VS DEAD) ===================
++----------+-------------------------------------+-------------------+
+| STATUS   | SUBDOMAIN                           | RESOLVED IP       |
++----------+-------------------------------------+-------------------+
+| ALIVE    | accounts.google.com                 | 192.178.212.84    |
+| ALIVE    | adwords.google.com                  | 74.125.202.100    |
+| ALIVE    | mail.google.com                     | 142.251.183.17    |
+| DEAD     | secure.google.com                   | UNRESOLVED        |
+| DEAD     | vpn.google.com                      | UNRESOLVED        |
++----------+-------------------------------------+-------------------+
 ```
 
 ---
 
-## 🎯 Learning Objectives
+## 📁 Repository Structure
 
-This project focuses on:
-
-* Bash scripting fundamentals
-* Working with command-line tools (`grep`, `awk`, `cut`)
-* Using APIs with `curl`
-* Parsing JSON with `jq`
-* Understanding WHOIS and BGP data
-
----
-
-## 🔧 Future Improvements
-
-* Input validation for IP addresses
-* Error handling for API failures
-* Support for multiple IP lookups
-* Add command-line flags (e.g., help option)
-* Improve parsing reliability across registries
-
----
-
-## ⚠️ Notes
-
-* Tested on Ubuntu/Debian-based systems
-* Other distributions may require different package managers (`dnf`, `yum`, `brew`)
+```
+connect56.sh   # Main CLI executable
+setup.sh       # Multi-distro package & man page installer
+connect56.1    # Troff format man page for 'man connect56'
+README.md      # Comprehensive documentation
+```
 
 ---
 
 ## 👨‍💻 Author
 
 **Edem Robin**
-Network Engineer | Learning Automation & Scripting
+Network Engineer | Cyber Security & Network Automation
 
 ---
 
 ## 📜 License
 
-This project is open-source and available under the MIT License.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
