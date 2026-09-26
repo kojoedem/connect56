@@ -71,6 +71,7 @@ OPTIONS:
     -m, --modules     Specify modules to run (comma-separated: all,whois,dns,web,subdomain)
     -v, --version     Show tool version
     -h, --help        Show this help message
+    -l, --lan-scan     Scan the local network for devices and open ports
 
 EXAMPLES:
     ./connect56.sh 8.8.8.8
@@ -116,6 +117,21 @@ check_and_update() {
         log_success "CONNECT56 is already up to date (v${VERSION})."
     fi
 }
+run_lan_scan() {
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local lan_script="${script_dir}/lan_scan.sh"
+
+    if [[ ! -f "$lan_script" ]]; then
+        log_error "lan_scan.sh not found in ${script_dir}. Place it in the same folder as connect56.sh."
+        exit 1
+    fi
+
+    [[ -x "$lan_script" ]] || chmod +x "$lan_script"
+
+    log_info "Launching LAN scan module..."
+    "$lan_script" "$@"
+}
 
 # Parse command-line arguments
 parse_args() {
@@ -147,6 +163,11 @@ parse_args() {
                 ;;
             -h|--help)
                 show_help
+                exit 0
+                ;;
+            -l|--lan-scan)
+                shift
+                run_lan_scan "$@"
                 exit 0
                 ;;
             -*)
@@ -228,9 +249,28 @@ prompt_module_selection() {
         echo -e "  ${CYAN}[4]${RESET} Web Technology & Header Reconnaissance"
         echo -e "  ${CYAN}[5]${RESET} Subdomain Discovery & Health Check (Alive vs Dead)"
         echo -e "  ${CYAN}[6]${RESET} Custom Module Selection"
+        # echo -e "  ${CYAN}[7]${RESET} Check GitHub for Script Updates"
+        # echo
+        # read -rp "Enter choice [1-7] (Default: 1): " module_choice
+        # case "$module_choice" in
+        #     2) SELECTED_MODULES="WHOIS" ;;
+        #     3) SELECTED_MODULES="DNS" ;;
+        #     4) SELECTED_MODULES="WEB" ;;
+        #     5) SELECTED_MODULES="SUBDOMAIN" ;;
+        #     6)
+        #         read -rp "Enter comma-separated modules (whois,dns,web,subdomain): " custom_mods
+        #         SELECTED_MODULES="$custom_mods"
+        #         ;;
+        #     7)
+        #         check_and_update
+        #         exit 0
+        #         ;;
+        #     *) SELECTED_MODULES="ALL" ;;
+        # esac
         echo -e "  ${CYAN}[7]${RESET} Check GitHub for Script Updates"
+        echo -e "  ${CYAN}[8]${RESET} Local Area Network Scan (devices & open ports)"
         echo
-        read -rp "Enter choice [1-7] (Default: 1): " module_choice
+        read -rp "Enter choice [1-8] (Default: 1): " module_choice
         case "$module_choice" in
             2) SELECTED_MODULES="WHOIS" ;;
             3) SELECTED_MODULES="DNS" ;;
@@ -242,6 +282,10 @@ prompt_module_selection() {
                 ;;
             7)
                 check_and_update
+                exit 0
+                ;;
+            8)
+                run_lan_scan
                 exit 0
                 ;;
             *) SELECTED_MODULES="ALL" ;;
