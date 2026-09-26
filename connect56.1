@@ -1,0 +1,67 @@
+.TH CONNECT56 1 "2023-10-24" "CONNECT56 v2.0.0" "User Commands"
+.SH NAME
+connect56 \- Cyber Security & Network Intelligence CLI Tool
+.SH SYNOPSIS
+.B ./connect56.sh
+[\fIOPTIONS\fR] [\fITARGET\fR]
+.SH DESCRIPTION
+.B CONNECT56
+is an advanced Linux command\-line network intelligence and cyber security reconnaissance script.
+It performs target inspection on IPv4, IPv6 addresses, or domain names to gather:
+.IP \(bu 3
+Target Resolution & Reverse DNS (PTR)
+.IP \(bu 3
+IP Geolocation, ASN Ownership & WHOIS/RDAP Registry details
+.IP \(bu 3
+BGP Routing Intelligence & RPKI validation status via RADB / RIPE Stat
+.IP \(bu 3
+DNS Record Enumeration (A, AAAA, NS, MX, TXT)
+.IP \(bu 3
+Web Reconnaissance (HTTP Status, Server Headers, Technology, Page Title)
+.IP \(bu 3
+Subdomain Enumeration & Health Monitoring (Categorized as ALIVE or DEAD based on DNS resolution)
+.SH OPTIONS
+.TP
+.BR \-j ", " \-\-json
+Output results as a structured JSON object suitable for SIEM, log aggregators, or automated pipelines.
+.TP
+.BR \-c ", " \-\-no\-color
+Disable ANSI color codes in output formatting.
+.TP
+.BR \-q ", " \-\-quiet
+Suppress non\-essential status messages and ASCII banners.
+.TP
+.BR \-m ", " \-\-modules \ \fIMODULES\fR
+Specify intelligence modules to execute. \fIMODULES\fR can be a comma\-separated list of:
+\fBall\fR, \fBwhois\fR, \fBdns\fR, \fBweb\fR, \fBsubdomain\fR.
+.TP
+.BR \-v ", " \-\-version
+Display script version and exit.
+.TP
+.BR \-h ", " \-\-help
+Display command usage guide and exit.
+.SH INTERACTIVE MODE
+When executed without arguments in an interactive terminal session,
+.B CONNECT56
+will prompt the user to choose an intelligence module scan profile (1\-6).
+.SH EXAMPLES
+.TP
+.B ./connect56.sh 8.8.8.8
+Run full reconnaissance scan against Google DNS IP address.
+.TP
+.B ./connect56.sh google.com \-\-json
+Run full reconnaissance scan against google.com and return JSON format.
+.TP
+.B ./connect56.sh example.com \-m dns,subdomain
+Run only DNS Enumeration and Subdomain Discovery against example.com.
+.SH MANUAL INSTALLATION
+To make \fBman connect56\fR available system\-wide:
+.PP
+.RS
+sudo cp connect56.1 /usr/local/share/man/man1/
+sudo mandb
+.RE
+.SH AUTHOR
+Written by Edem Robin.
+.SH BUGS
+Report bugs to the repository maintainer.
